@@ -40,10 +40,24 @@ impl Default for Person {
 // If while parsing the age, something goes wrong, then return the default of
 // Person Otherwise, then return an instantiated Person object with the results
 
-// I AM NOT DONE
-
 impl From<&str> for Person {
     fn from(s: &str) -> Person {
+        let arr = s.split(",").collect::<Vec<&str>>();
+
+        if arr[0]=="" || arr.len() != 2{
+            return crate::Person::default()
+        }
+
+        let age = arr[1].parse::<usize>();
+        if age.is_err() {
+            return crate::Person::default()
+        }
+
+        Self{
+            name: String::from(arr[0]),
+            age: age.unwrap(),
+        }
+
     }
 }
 

@@ -2,11 +2,11 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
 use std::vec::*;
+use std::ops::Add;
 
 #[derive(Debug)]
 struct Node<T> {
@@ -35,7 +35,7 @@ impl<T> Default for LinkedList<T> {
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T> LinkedList<T>  {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -69,15 +69,88 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+    pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self
+    where
+        T: PartialOrd,
+    {
+        // 空链表直接返回
+        if list_a.length == 0 {
+            return list_b;
         }
-	}
+
+        if list_b.length == 0 {
+            return list_a;
+        }
+
+        let total_length = list_a.length + list_b.length;
+
+        // 两个游标
+        let mut cur_a = list_a.start;
+        let mut cur_b = list_b.start;
+
+        // 新链表的头尾
+        let mut head: Option<NonNull<Node<T>>> = None;
+        let mut tail: Option<NonNull<Node<T>>> = None;
+
+        // 类似归并排序 merge
+        while let (Some(a), Some(b)) = (cur_a, cur_b) {
+            let choose_a = unsafe {
+                (*a.as_ptr()).val <= (*b.as_ptr()).val
+            };
+
+            let chosen = if choose_a {
+                // 先保存 a.next
+                cur_a = unsafe {
+                    (*a.as_ptr()).next
+                };
+
+                a
+            } else {
+                cur_b = unsafe {
+                    (*b.as_ptr()).next
+                };
+
+                b
+            };
+
+            // chosen 接到结果链表后面
+            match tail {
+                None => {
+                    head = Some(chosen);
+                    tail = Some(chosen);
+                }
+
+                Some(t) => {
+                    unsafe {
+                        (*t.as_ptr()).next = Some(chosen);
+                    }
+
+                    tail = Some(chosen);
+                }
+            }
+        }
+
+        // 此时其中一个链表已经走完
+        // 另一个链表剩下的部分本来就是有序的，可以整体接上
+        let (remaining, final_end) = if cur_a.is_some() {
+            (cur_a, list_a.end)
+        } else {
+            (cur_b, list_b.end)
+        };
+
+        if let Some(t) = tail {
+            unsafe {
+                (*t.as_ptr()).next = remaining;
+            }
+        }
+
+        LinkedList {
+            length: total_length,
+            start: head,
+            end: final_end,
+        }
+    }
+
 }
 
 impl<T> Display for LinkedList<T>
